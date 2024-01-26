@@ -309,8 +309,8 @@
 
             // Append new rows with the latest data
             data.forEach(function (car) {
-                var entryTime = new Date(car.entryTime).toLocaleString();
-                var leaveTime = car.leaveTime !== null ? new Date(car.leaveTime).toLocaleString() : '<span class="text-gray-500">Not left yet</span>';
+                var entryTime = new Date(car.entryTime).toLocaleString('tr-TR', { timeZone: 'UTC' });
+                var leaveTime = car.leaveTime !== null ? new Date(car.leaveTime).toLocaleString('tr-TR', { timeZone: 'UTC' }): '<span class="text-gray-500">Not left yet</span>';
 
                 var row = `
                     <tr>
