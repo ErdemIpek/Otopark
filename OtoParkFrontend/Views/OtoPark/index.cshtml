@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        /* Reset some default styles */
+        body, h1, h2, p, table {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ecf0f5; /* Light blue background */
+            color: #333; /* Dark text color */
+            margin: 0;
+            padding: 0;
+        }
+
+        #navbar {
+            background-color: #3498db; /* Light blue background for the navbar */
+            padding: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #content {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #2980b9; /* Darker blue background for table headers */
+            color: white;
+        }
+
+        button {
+            background-color: #3498db; /* Light blue background for buttons */
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+        }
+
+        input {
+            padding: 8px;
+            margin-right: 8px;
+        }
+
+        #priceModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .editable-cell {
+            position: relative;
+        }
+
+        .editable-cell input {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            margin: 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .editable-cell:hover input {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="content">
+        <label for="searchInput">Search License Plate:</label>
+        <input type="text" id="searchInput" />
+        <button onclick="searchLicensePlate()">Search</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>License Plate</th>
+                    <th>Entry Time</th>
+                    <th>Leave Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var car in Model)
+                {
+                    <tr>
+                        <td class="editable-cell" onclick="editLicensePlate(this)" data-license-plate='@car.LicensePlate' data-entry-time='@car.EntryTime.ToString("yyyy-MM-dd HH:mm:ss")'>
+                            <span class="license-plate-text">@car.LicensePlate</span>
+                            <input type="text" class="edit-input" style="display: none;" />
+                        </td>
+
+                        <td data-license-plate='@car.LicensePlate' data-field='entry-time'>@car.EntryTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td data-license-plate='@car.LicensePlate' data-field='leave-time'>
+                            @if (car.LeaveTime != null)
+                            {
+                                @car.LeaveTime.ToString("yyyy-MM-dd HH:mm:ss")
+                            }
+                            else
+                            {
+                                <span class="text-gray-500">Not left yet</span>
+                            }
+                        </td>
+
+                        <td>
+                            <button onclick="showPrice('@car.LicensePlate')">Show Price</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div id="priceModal">
+        <div class="modal-content">
+            <h2>Receipt</h2>
+            <div id="receiptDetails"></div>
+            <button onclick="closePriceModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function showPrice(licensePlate) {
+            // Get entry and leave times from the table
+            console.log(`License Plate: ${licensePlate}`);
+            var entryTimeStr = document.querySelector(`[data-license-plate='${licensePlate}'][data-field='entry-time']`).textContent;
+            var leaveTimeStr = document.querySelector(`[data-license-plate='${licensePlate}'][data-field='leave-time']`).textContent;
+
+            // Parse entry and leave times as JavaScript Date objects
+            var entryTime = entryTimeStr;
+            var leaveTime = leaveTimeStr !== 'Not left yet' ? leaveTimeStr : null;
+
+            // Calculate duration in hours
+            var duration = calculateDuration(entryTime, leaveTime);
+            document.getElementById('receiptDetails').innerHTML = `License Plate: ${licensePlate}<br>Duration: ${duration} hours<br>Total Price: ${duration * 10} TRY`;
+
+            // Show the modal
+            document.getElementById('priceModal').style.display = 'block';
+        }
+
+        function closePriceModal() {
+            // Hide the modal
+            document.getElementById('priceModal').style.display = 'none';
+        }
+      function parseCustomDateFormat(dateString) {
+    // Ensure dateString is a non-empty string
+    if (typeof dateString !== 'string' || dateString.trim() === '') {
+        console.error('Invalid date string:', dateString);
+        return null; // Return null for invalid or empty dateString
+    }
+
+    // Assuming the date format is "DD.MM.YYYY HH:mm:ss"
+    var parts = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+
+    // Check if parts array has the expected length
+    if (!parts) {
+        console.error('Unexpected date format:', dateString);
+        return null; // Return null for unexpected format
+    }
+
+    return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
+}
+        function calculateDuration(entryTime, leaveTime) {
+            // Check if leaveTime is provided
+            if (leaveTime) {
+                console.log(entryTime);
+                // Convert date strings to JavaScript Date objects
+                      var date1 = parseCustomDateFormat(entryTime);
+                        var date2 = parseCustomDateFormat(leaveTime);
+
+                        // Check if the dates are valid
+                        if (!date1 || !date2) {
+                            console.error('Invalid date strings:', entryTime, leaveTime);
+                            return NaN;
+                        }
+
+                        // Calculate time difference in milliseconds
+                        var timeDifference = Math.abs(date2 - date1);
+
+                        // Convert milliseconds to hours
+                        var hourDifference = timeDifference / (1000 * 60 * 60);
+
+                        return hourDifference;
+            } else {
+                // Handle the case where leaveTime is not provided
+                return 0;
+            }
+        }
+
+        function searchLicensePlate() {
+            var searchInput = document.getElementById('searchInput').value.toUpperCase();
+            var table = document.querySelector('table');
+            var rows = table.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                var licensePlateCell = row.querySelector('td:first-child');
+                var licensePlate = licensePlateCell.textContent.toUpperCase();
+
+                if (licensePlate.includes(searchInput)) {
+                    row.style.display = ''; // Show the row
+                    console.log(licensePlate);
+                } else {
+                    row.style.display = 'none'; // Hide the row
+                }
+            });
+        }
+
+       function editLicensePlate(cell) {
+        var input = cell.querySelector('input');
+        var licensePlateText = cell.querySelector('.license-plate-text');
+        input.value = licensePlateText.textContent.trim();
+        input.style.display = 'block';
+        licensePlateText.style.display = 'none';
+
+        input.addEventListener('keyup', function (event) {
+            if (event.keyCode === 13) { // Enter key
+                saveEditedLicensePlate(cell, input.value);
+            }
+        });
+    }
+       function saveEditedLicensePlate(cell, newLicensePlate) {
+        var licensePlateText = cell.querySelector('.license-plate-text');
+        var licensePlate = licensePlateText.textContent.trim();
+        var entryTimeStr = cell.getAttribute('data-entry-time');
+        
+
+        
+        // Convert it to the desired format
+       // Convert entryDate to ISO string
+        // Call the endpoint to edit license plate
+      $.ajax({
+    url: 'http://localhost:5268/OtoPark/editLicensePlate',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify({
+        licensePlate: licensePlate,
+        entryTime: entryTimeStr,
+        newLicensePlate: newLicensePlate
+    }),
+    success: function (data) {
+        // Handle success...
+         updateTable();
+    },
+    error: function (error) {
+        console.error('Error editing license plate:', error);
+        // Handle error...
+    }
+});
+    }
+
+        // Function to update the table with the latest data
+      function updateTable() {
+    $.ajax({
+        url: 'http://localhost:5268/OtoPark/allVehicles',
+        method: 'GET',
+        success: function (data) {
+            // Clear existing table rows
+            var tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            // Append new rows with the latest data
+            data.forEach(function (car) {
+                var entryTime = new Date(car.entryTime).toLocaleString();
+                var leaveTime = car.leaveTime !== null ? new Date(car.leaveTime).toLocaleString() : '<span class="text-gray-500">Not left yet</span>';
+
+                var row = `
+                    <tr>
+                        <td class="editable-cell" onclick="editLicensePlate(this)" data-license-plate='${car.licensePlate}' data-entry-time='${car.entryTime}'>
+                            <span class="license-plate-text">${car.licensePlate}</span>
+                            <input type="text" class="edit-input" style="display: none;" />
+                        </td>
+                        <td data-license-plate='${car.licensePlate}' data-field='entry-time'>${entryTime}</td>
+                        <td data-license-plate='${car.licensePlate}' data-field='leave-time'>${leaveTime}</td>
+                        <td>
+                            <button onclick="showPrice('${car.licensePlate}')">Show Price</button>
+                        </td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        },
+        error: function (error) {
+            console.error('Error fetching data:', error);
+        }
+    });
+}
+
+
+
+        // Call updateTable initially and set an interval to periodically update the table
+        updateTable();
+        setInterval(updateTable, 60000); // Update every 5 seconds (adjust as needed)
+    </script>
+
+</body>
+
+</html>
