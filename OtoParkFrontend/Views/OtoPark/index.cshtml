@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 
 <head>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        /* Reset some default styles */
         body, h1, h2, p, table {
             margin: 0;
             padding: 0;
@@ -16,14 +15,14 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #ecf0f5; /* Light blue background */
-            color: #333; /* Dark text color */
+            background-color: #ecf0f5;
+            color: #333;
             margin: 0;
             padding: 0;
         }
 
         #navbar {
-            background-color: #3498db; /* Light blue background for the navbar */
+            background-color: #3498db;
             padding: 15px;
             text-align: center;
             color: white;
@@ -47,12 +46,12 @@
         }
 
         th {
-            background-color: #2980b9; /* Darker blue background for table headers */
+            background-color: #2980b9;
             color: white;
         }
 
         button {
-            background-color: #3498db; /* Light blue background for buttons */
+            background-color: #3498db;
             color: white;
             padding: 8px 16px;
             border: none;
@@ -61,7 +60,7 @@
         }
 
         button:hover {
-            background-color: #2980b9; /* Darker blue on hover */
+            background-color: #2980b9;
         }
 
         input {
@@ -76,7 +75,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+            background: rgba(0, 0, 0, 0.5);
         }
 
         .modal-content {
@@ -116,17 +115,18 @@
 <body>
 
     <div id="content">
-        <label for="searchInput">Search License Plate:</label>
+        <label for="searchInput">Araç Plakasını Ara:</label>
         <input type="text" id="searchInput" />
-        <button onclick="searchLicensePlate()">Search</button>
+        <button onclick="searchLicensePlate()">Ara</button>
 
         <table>
             <thead>
                 <tr>
-                    <th>License Plate</th>
-                    <th>Entry Time</th>
-                    <th>Leave Time</th>
-                    <th>Action</th>
+                    <th>Araç Plakası</th>
+                     <th>Durum</th>
+                    <th>Giriş Zamanı</th>
+                    <th>Çıkış Zamanı</th>
+                    <th>İşlem</th>
                 </tr>
             </thead>
             <tbody>
@@ -146,12 +146,12 @@
                             }
                             else
                             {
-                                <span class="text-gray-500">Not left yet</span>
+                                <span class="text-gray-500">Henüz çıkış yapılmadı</span>
                             }
                         </td>
 
                         <td>
-                            <button onclick="showPrice('@car.LicensePlate')">Show Price</button>
+                            <button onclick="showPrice('@car.LicensePlate')">Fiyatı Göster</button>
                         </td>
                     </tr>
                 }
@@ -162,76 +162,62 @@
     <!-- Modal -->
     <div id="priceModal">
         <div class="modal-content">
-            <h2>Receipt</h2>
+            <h2>Fatura</h2>
             <div id="receiptDetails"></div>
-            <button onclick="closePriceModal()">Close</button>
+            <button onclick="closePriceModal()">Kapat</button>
         </div>
     </div>
 
     <script>
         function showPrice(licensePlate) {
-            // Get entry and leave times from the table
-            console.log(`License Plate: ${licensePlate}`);
+            console.log(`Araç Plakası: ${licensePlate}`);
             var entryTimeStr = document.querySelector(`[data-license-plate='${licensePlate}'][data-field='entry-time']`).textContent;
             var leaveTimeStr = document.querySelector(`[data-license-plate='${licensePlate}'][data-field='leave-time']`).textContent;
 
-            // Parse entry and leave times as JavaScript Date objects
             var entryTime = entryTimeStr;
-            var leaveTime = leaveTimeStr !== 'Not left yet' ? leaveTimeStr : null;
+            var leaveTime = leaveTimeStr !== 'Henüz çıkış yapılmadı' ? leaveTimeStr : null;
 
-            // Calculate duration in hours
             var duration = calculateDuration(entryTime, leaveTime);
-            document.getElementById('receiptDetails').innerHTML = `License Plate: ${licensePlate}<br>Duration: ${duration} hours<br>Total Price: ${duration * 10} TRY`;
+            document.getElementById('receiptDetails').innerHTML = `Araç Plakası: ${licensePlate}<br>Süre: ${duration} saat<br>Toplam Fiyat: ${duration * 10} TRY`;
 
-            // Show the modal
             document.getElementById('priceModal').style.display = 'block';
         }
 
         function closePriceModal() {
-            // Hide the modal
             document.getElementById('priceModal').style.display = 'none';
         }
+      
       function parseCustomDateFormat(dateString) {
-    // Ensure dateString is a non-empty string
-    if (typeof dateString !== 'string' || dateString.trim() === '') {
-        console.error('Invalid date string:', dateString);
-        return null; // Return null for invalid or empty dateString
+        if (typeof dateString !== 'string' || dateString.trim() === '') {
+            console.error('Geçersiz tarih dizesi:', dateString);
+            return null;
+        }
+
+        var parts = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
+
+        if (!parts) {
+            console.error('Beklenmeyen tarih formatı:', dateString);
+            return null;
+        }
+
+        return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
     }
-
-    // Assuming the date format is "DD.MM.YYYY HH:mm:ss"
-    var parts = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})$/);
-
-    // Check if parts array has the expected length
-    if (!parts) {
-        console.error('Unexpected date format:', dateString);
-        return null; // Return null for unexpected format
-    }
-
-    return new Date(parts[3], parts[2] - 1, parts[1], parts[4], parts[5], parts[6]);
-}
+      
         function calculateDuration(entryTime, leaveTime) {
-            // Check if leaveTime is provided
             if (leaveTime) {
-                console.log(entryTime);
-                // Convert date strings to JavaScript Date objects
-                      var date1 = parseCustomDateFormat(entryTime);
-                        var date2 = parseCustomDateFormat(leaveTime);
+                var date1 = parseCustomDateFormat(entryTime);
+                var date2 = parseCustomDateFormat(leaveTime);
 
-                        // Check if the dates are valid
-                        if (!date1 || !date2) {
-                            console.error('Invalid date strings:', entryTime, leaveTime);
-                            return NaN;
-                        }
+                if (!date1 || !date2) {
+                    console.error('Geçersiz tarih dizileri:', entryTime, leaveTime);
+                    return NaN;
+                }
 
-                        // Calculate time difference in milliseconds
-                        var timeDifference = Math.abs(date2 - date1);
+                var timeDifference = Math.abs(date2 - date1);
+                var hourDifference = timeDifference / (1000 * 60 * 60);
 
-                        // Convert milliseconds to hours
-                        var hourDifference = timeDifference / (1000 * 60 * 60);
-
-                        return hourDifference;
+                return hourDifference;
             } else {
-                // Handle the case where leaveTime is not provided
                 return 0;
             }
         }
@@ -246,10 +232,10 @@
                 var licensePlate = licensePlateCell.textContent.toUpperCase();
 
                 if (licensePlate.includes(searchInput)) {
-                    row.style.display = ''; // Show the row
+                    row.style.display = '';
                     console.log(licensePlate);
                 } else {
-                    row.style.display = 'none'; // Hide the row
+                    row.style.display = 'none';
                 }
             });
         }
@@ -267,50 +253,44 @@
             }
         });
     }
+    
        function saveEditedLicensePlate(cell, newLicensePlate) {
         var licensePlateText = cell.querySelector('.license-plate-text');
         var licensePlate = licensePlateText.textContent.trim();
         var entryTimeStr = cell.getAttribute('data-entry-time');
-        
 
-        
-        // Convert it to the desired format
-       // Convert entryDate to ISO string
-        // Call the endpoint to edit license plate
-      $.ajax({
-    url: 'http://localhost:5268/OtoPark/editLicensePlate',
-    method: 'POST',
-    contentType: 'application/json',
-    data: JSON.stringify({
-        licensePlate: licensePlate,
-        entryTime: entryTimeStr,
-        newLicensePlate: newLicensePlate
-    }),
-    success: function (data) {
-        // Handle success...
-         updateTable();
-    },
-    error: function (error) {
-        console.error('Error editing license plate:', error);
-        // Handle error...
+        $.ajax({
+            url: 'http://localhost:5268/OtoPark/editLicensePlate',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                licensePlate: licensePlate,
+                entryTime: entryTimeStr,
+                newLicensePlate: newLicensePlate
+            }),
+            success: function (data) {
+                updateTable();
+            },
+            error: function (error) {
+                console.error('Araç plakası düzenlenirken hata:', error);
+            }
+        });
     }
-});
-    }
-
-        // Function to update the table with the latest data
-      function updateTable() {
+    
+     function updateTable() {
     $.ajax({
         url: 'http://localhost:5268/OtoPark/allVehicles',
         method: 'GET',
         success: function (data) {
-            // Clear existing table rows
             var tbody = document.querySelector('tbody');
             tbody.innerHTML = '';
 
-            // Append new rows with the latest data
             data.forEach(function (car) {
                 var entryTime = new Date(car.entryTime).toLocaleString('tr-TR', { timeZone: 'UTC' });
-                var leaveTime = car.leaveTime !== null ? new Date(car.leaveTime).toLocaleString('tr-TR', { timeZone: 'UTC' }): '<span class="text-gray-500">Not left yet</span>';
+                var leaveTime = car.leaveTime;
+                var leaveTimeDisplay = leaveTime !== null
+                    ? `<span class="text-gray-500">Çıkış yapıldı.</span>`
+                    : `<span class="text-gray-500">Park halinde.</span>`;
 
                 var row = `
                     <tr>
@@ -318,26 +298,24 @@
                             <span class="license-plate-text">${car.licensePlate}</span>
                             <input type="text" class="edit-input" style="display: none;" />
                         </td>
+                        <td>${leaveTimeDisplay}</td>
                         <td data-license-plate='${car.licensePlate}' data-field='entry-time'>${entryTime}</td>
-                        <td data-license-plate='${car.licensePlate}' data-field='leave-time'>${leaveTime}</td>
+                        <td data-license-plate='${car.licensePlate}' data-field='leave-time'>${leaveTime !== null ? new Date(leaveTime).toLocaleString('tr-TR', { timeZone: 'UTC' }) : '<span class="text-gray-500">Henüz çıkış yapılmadı</span>'}</td>
                         <td>
-                            <button onclick="showPrice('${car.licensePlate}')">Show Price</button>
+                            <button onclick="showPrice('${car.licensePlate}')">Fiyatı Göster</button>
                         </td>
                     </tr>`;
                 tbody.innerHTML += row;
             });
         },
         error: function (error) {
-            console.error('Error fetching data:', error);
+            console.error('Veri alınırken hata:', error);
         }
     });
 }
 
-
-
-        // Call updateTable initially and set an interval to periodically update the table
         updateTable();
-        setInterval(updateTable, 60000); // Update every 5 seconds (adjust as needed)
+        setInterval(updateTable, 60000);
     </script>
 
 </body>

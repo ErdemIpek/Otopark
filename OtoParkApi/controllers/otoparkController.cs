@@ -25,7 +25,7 @@ namespace OtoParkApi.Controllers
         [HttpPost("carEntered")]
         public async Task<ActionResult> CarEntered(string licensePlate, DateTime entryTime)
         {
-              car = new Car { LicensePlate = licensePlate, EntryTime = entryTime, LeaveTime = DateTime.MinValue };
+              car = new Car { LicensePlate = licensePlate, EntryTime = entryTime, LeaveTime = null };
               
             _context.Cars.Add(car);
             await _context.SaveChangesAsync();
